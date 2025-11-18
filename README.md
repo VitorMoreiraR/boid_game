@@ -16,7 +16,7 @@ Este projeto é uma simulação do movimento de um bando de pássaros com algori
 ## Recursos Técnicos
 
 * **Linguagem:** C++
-* **Gráficos:** OpenGL (Fixed Function Pipeline)
+* **Gráficos:** OpenGL
 * **Bibliotecas:** **GLFW**, **GLEW**
 * * **Sistema Operacional:** Linux(Ubuntu && WSL2)
 

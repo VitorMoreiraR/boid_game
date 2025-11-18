@@ -2,7 +2,7 @@
 
 Este projeto é uma simulação do movimento de um bando de pássaros com algoritmos básicos, desenvolvida em **C++** usando a biblioteca **OpenGL** (via **GLFW** e **GLEW**) para renderização.
 
-## ✨ Recursos
+## Recursos
 
 * **Simulação de Voo:** Simulação da formação de voo com um pássaro líder.
 * **Evasão de Obstáculos:** Os pássaros ajustam sua altitude (eixo Y) para evitar colidir com paralelepípedos e o cone central.

@@ -1,0 +1,12 @@
+const float SAFETY_RADIUS_XZ = 30.0f;
+const float REPULSION_STRENGTH = 30.0f;
+const float MAX_OBSTACLE_Y = 30.0f;
+const float BIRD_CLEARANCE_Y = 5.0f;
+const float MAX_ANGLE = 25;
+const int TOTAL_BIRDS = 16;
+const int WINDOW_WIDTH = 1200;
+const int WINDOW_HEIGHT = 800;
+const float MAX_SPEED = 0.14;
+const float MIN_SPEED = 0.05;
+const float MAX_ANGLE_SPEED = 0.17;
+const float MIN_ANGLE_SPEED = 0.05;

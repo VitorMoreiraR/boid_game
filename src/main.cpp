@@ -151,30 +151,7 @@ void keys_callback(GLFWwindow *window, int key, int scancode, int action,
   }
 
   if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-    if (cameraType == 'c')
-      return;
-    cameraType = 'c';
-    camera.changePosition(vec3(0, 30, 0));
-    camera.changeRotation(vec3(0, 0, -1));
-  }
-
-  if (key == GLFW_KEY_X && action == GLFW_PRESS) {
-    if (cameraType == 'x')
-      return;
-    cameraType = 'x';
-    camera.changeRotation(vec3(0, 0, -1));
-    camera.setPitch(-89.0f);
-    camera.setYaw(0);
-    camera.update();
-  }
-
-  if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
-    if (cameraType == 'z')
-      return;
-    camera.changeRotation(vec3(0, 0, -1));
-    camera.setPitch(0);
-    camera.update();
-    cameraType = 'z';
+    camera.changeCameraType();
   }
 
   if (key == GLFW_KEY_F && action == GLFW_PRESS && !pause) {
@@ -204,28 +181,6 @@ void changeWingAngle(Bird &obj) {
   } else if (obj.wingAngle < -1 * MAX_ANGLE) {
     obj.wingAngleType = 'n';
   }
-}
-
-vec3 getBoidCenter() {
-  vec3 center(0.0, 0.0, 0.0);
-  int count = 0;
-
-  center = center + lead.pos;
-  count++;
-  for (int i = 0; i < TOTAL_BIRDS; i++) {
-    if (!birds[i].deleted) {
-      center = center + birds[i].pos + lead.pos;
-      count++;
-    }
-  }
-
-  if (count > 0) {
-    center.x /= (float)count;
-    center.y /= (float)count;
-    center.z /= (float)count;
-  }
-
-  return center;
 }
 
 void drawBoid(float rad) {
@@ -280,28 +235,6 @@ void drawBoid(float rad) {
   lead.pos.z += cos(rad) * speed;
 }
 
-void cameraLogic(vec3 speed_vector) {
-  glLoadIdentity();
-  if (cameraType == 'c') {
-    vec3 center = getBoidCenter();
-    vec3 up(0.0, 1.0, 0.0);
-    camera.changeLookFor(center);
-    camera.aenable(false);
-  } else if (cameraType == 'x') {
-    camera.changePosition(
-        vec3(lead.pos.x + speed_vector.x, 200, lead.pos.z + speed_vector.z));
-    camera.aenable(true);
-  } else if (cameraType == 'z') {
-    float BEHIND_DISTANCE = 50.0f;
-    float height = 7.0f;
-    vec3 cameraPos = lead.pos - speed_vector * BEHIND_DISTANCE;
-    cameraPos.y += height;
-    camera.changePosition(cameraPos);
-    camera.changeLookFor(lead.pos);
-    // glLoadIdentity();
-    camera.aenable(false);
-  }
-}
 
 void drawParallelepipeds() {
   for (int i = 0; i < 10; i++) {
@@ -316,7 +249,7 @@ void draw(GLFWwindow *window) {
   float rad = boidRotationAngleY * (3.14159265358979323846f / 180.0f);
   vec3 seep_vector(sin(rad), 0.0f, cos(rad));
 
-  cameraLogic(seep_vector);
+  camera.cameraLogic(seep_vector, lead);
 
   glPushMatrix();
   glPushMatrix();

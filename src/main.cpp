@@ -18,7 +18,6 @@ std::vector<Object> obstacles;
 Bird lead(vec3(10, 15, -10));
 float boidRotationAngleY = 0;
 float speed = 0.1f;
-char cameraType = 'c';
 bool pause = false;
 
 Camera camera(vec3(0, 30, 0));
@@ -27,7 +26,7 @@ float length(vec3 v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
 vec3 computeVerticalRepulsionForce(const Bird &bird, const Object &obstacle) {
 
   vec3 obstacle_center = obstacle.pos;
-  vec3 bird_pos = bird.pos + lead.pos;
+  vec3 bird_pos = bird.getPos() + lead.getPos();
   vec3 diff_xz = obstacle_center;
   diff_xz.y = 0.0f;
   bird_pos.y = 0.0f;
@@ -38,7 +37,7 @@ vec3 computeVerticalRepulsionForce(const Bird &bird, const Object &obstacle) {
     return vec3(0.0f, 0.0f, 0.0f);
   }
 
-  if ((bird.pos.y + lead.pos.y) > MAX_OBSTACLE_Y + BIRD_CLEARANCE_Y) {
+  if ((bird.getPos().y + bird.getPos().y) > MAX_OBSTACLE_Y + BIRD_CLEARANCE_Y) {
     return vec3(0.0f, 0.0f, 0.0f);
   }
 
@@ -47,7 +46,7 @@ vec3 computeVerticalRepulsionForce(const Bird &bird, const Object &obstacle) {
   float vertical_force = REPULSION_STRENGTH * speed * factor;
 
   float top_proximity =
-      MAX_OBSTACLE_Y + BIRD_CLEARANCE_Y - (bird.pos.y + lead.pos.y);
+      MAX_OBSTACLE_Y + BIRD_CLEARANCE_Y - (bird.getPos().y + bird.getPos().y);
   vertical_force *= std::min(1.0f, top_proximity / (MAX_OBSTACLE_Y * 2.0f));
 
   if (vertical_force < 0.0f)
@@ -75,7 +74,33 @@ void resize(int w, int h) {
   glMatrixMode(GL_MODELVIEW);
 }
 
-vec3 getBirdPosition(int index) {
+
+
+int getFreeIndex() {
+  std::vector<int> desactives;
+  for (int i = 0; i < TOTAL_BIRDS; ++i) {
+    if (birds[i].getIsDeleted())
+      desactives.push_back(i);
+  }
+  if (desactives.empty())
+    return -1;
+  int k = randomInt(0, (int)desactives.size() - 1);
+  return desactives[k];
+}
+
+int getUsedIndex() {
+  std::vector<int> actives;
+  for (int i = 0; i < TOTAL_BIRDS; ++i) {
+    if (!birds[i].getIsDeleted())
+      actives.push_back(i);
+  }
+  if (actives.empty())
+    return -1;
+  int k = randomInt(0, (int)actives.size() - 1);
+  return actives[k];
+}
+
+vec3 changeBirdPosition(int index) {
 
   float distance = 8.0f;
   float height = 0.0f;
@@ -89,40 +114,16 @@ vec3 getBirdPosition(int index) {
   return vec3(offsetX, height, -offsetZ);
 }
 
-int getFreeIndex() {
-  std::vector<int> desactives;
-  for (int i = 0; i < TOTAL_BIRDS; ++i) {
-    if (birds[i].deleted)
-      desactives.push_back(i);
-  }
-  if (desactives.empty())
-    return -1;
-  int k = randomInt(0, (int)desactives.size() - 1);
-  return desactives[k];
-}
-
-int getUsedIndex() {
-  std::vector<int> actives;
-  for (int i = 0; i < TOTAL_BIRDS; ++i) {
-    if (!birds[i].deleted)
-      actives.push_back(i);
-  }
-  if (actives.empty())
-    return -1;
-  int k = randomInt(0, (int)actives.size() - 1);
-  return actives[k];
-}
-
 void addBird() {
 
   int index = getFreeIndex();
   if (index == -1) {
     return;
   }
-  vec3 posic = getBirdPosition(index);
-  Bird obj(posic);
-  obj.deleted = false;
-  birds[index] = obj;
+  vec3 position = changeBirdPosition(index);
+  Bird bird(position);
+  birds[index].setIsDeleted(false);
+  birds[index] = bird;
   current_number_of_birds += 1;
 }
 
@@ -132,7 +133,7 @@ void removeBird() {
   int index = getUsedIndex();
   if (index == -1)
     return;
-  birds[index].deleted = true;
+  birds[index].setIsDeleted(true);
   current_number_of_birds -= 1;
 }
 
@@ -169,35 +170,22 @@ void keys_callback(GLFWwindow *window, int key, int scancode, int action,
   keysAddRemoveBirds(window, key, action);
 }
 
-void changeWingAngle(Bird &obj) {
-  if (obj.wingAngleType == 'p') {
-    obj.wingAngle -= angle_change_rate;
-  } else if (obj.wingAngleType == 'n') {
-    obj.wingAngle += angle_change_rate;
-  }
-
-  if (obj.wingAngle > MAX_ANGLE) {
-    obj.wingAngleType = 'p';
-  } else if (obj.wingAngle < -1 * MAX_ANGLE) {
-    obj.wingAngleType = 'n';
-  }
-}
 
 void drawBoid(float rad) {
   glPushMatrix();
 
   glPushMatrix();
-  glTranslatef(lead.pos.x, lead.pos.y, lead.pos.z);
+  glTranslatef(lead.getPos().x, lead.getPos().y, lead.getPos().z);
   glRotatef(boidRotationAngleY, 0.0, 1.0, 0.0);
   // Desenha o líder
-  desenhaPassarro(lead.wingAngle);
+  desenhaPassarro(lead.getWingAngle());
 
   if (!pause)
-    changeWingAngle(lead);
+    lead.changeWingAngle(angle_change_rate);
   // Desenha seguidores
   vec3 formationOffset(0, 0, 0);
   for (int i = 0; i < TOTAL_BIRDS; i++) {
-    if (birds[i].deleted)
+    if (birds[i].getIsDeleted())
       continue;
     vec3 total_repulsion_force(0.0f, 0.0f, 0.0f);
     for (int j = 0; j < 11; j++) {
@@ -207,23 +195,21 @@ void drawBoid(float rad) {
     }
     if (total_repulsion_force.y > formationOffset.y)
       formationOffset = total_repulsion_force;
-
     if (formationOffset.y > 0.0 && !pause) {
-      birds[i].pos = birds[i].pos + formationOffset;
-    } else if (birds[i].pos.y > birds[i].beginPos.y && !pause) {
+      birds[i].setPos(birds[i].getPos() + formationOffset);
+    } else if (birds[i].getPos().y > birds[i].getBeginPos().y && !pause) {
       const float RETURN_FORCE_FACTOR = 0.005f;
-      float diff_y = birds[i].pos.y - birds[i].beginPos.y;
+      float diff_y = birds[i].getPos().y - birds[i].getBeginPos().y;
       float return_speed = diff_y * RETURN_FORCE_FACTOR;
-      birds[i].pos.y -= return_speed;
-      if (birds[i].pos.y < birds[i].beginPos.y) {
-        birds[i].pos.y = birds[i].beginPos.y;
+      birds[i].setPos(vec3(birds[i].getPos().x, birds[i].getPos().y - return_speed, birds[i].getPos().z));
+      if (birds[i].getPos().y < birds[i].getBeginPos().y) {
+        birds[i].setPos(vec3(birds[i].getPos().x, birds[i].getBeginPos().y, birds[i].getPos().z));
       }
     }
     glPushMatrix();
-    glTranslatef(birds[i].pos.x, birds[i].pos.y, birds[i].pos.z);
-    desenhaPassarro(birds[i].wingAngle);
-    if (!pause)
-      changeWingAngle(birds[i]);
+    glTranslatef(birds[i].getPos().x, birds[i].getPos().y, birds[i].getPos().z);
+    desenhaPassarro(birds[i].getWingAngle());
+    if (!pause)   birds[i].changeWingAngle(angle_change_rate);
     glPopMatrix();
   }
   glPopMatrix();
@@ -231,8 +217,7 @@ void drawBoid(float rad) {
 
   if (pause)
     return;
-  lead.pos.x += sin(rad) * speed;
-  lead.pos.z += cos(rad) * speed;
+  lead.setPos(vec3(lead.getPos().x + sin(rad) * speed, lead.getPos().y, lead.getPos().z + cos(rad) * speed));
 }
 
 
@@ -276,9 +261,9 @@ void moveBirds(int type) { boidRotationAngleY += type * 0.1f; }
 void init() {
 
   for (int i = 0; i < TOTAL_BIRDS; i++) {
-    vec3 posic = getBirdPosition(i);
+    vec3 posic = changeBirdPosition(i);
     Bird obj(posic);
-    obj.deleted = true;
+    obj.setIsDeleted(true);
     birds.push_back(obj);
   }
 
@@ -366,13 +351,13 @@ int main(void) {
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
       if (pause)
         continue;
-      moveBirds(1);
+      moveBirds(-1);
     }
 
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
       if (pause)
         continue;
-      moveBirds(-1);
+      moveBirds(1);
     }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {

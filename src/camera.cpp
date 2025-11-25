@@ -73,8 +73,7 @@ void Camera::changeCameraType() {
   }
 
   case CameraType::CENTER: {
-    // cameraCurrentType = CameraType::NORMAL_SPEED_VECTOR;
-    cameraCurrentType = CameraType::TOP;
+    cameraCurrentType = CameraType::NORMAL_SPEED_VECTOR;
     break;
   }
 
@@ -93,18 +92,17 @@ void Camera::changeCameraType() {
   }
 }
 
-void Camera::cameraLogic(vec3 speed_vector, Bird lead) {
+void Camera::cameraLogic(vec3 speed_vector, Bird *lead) {
   glLoadIdentity();
 
   switch (cameraCurrentType) {
   case CameraType::BEHIND_BOID: {
-    float BEHIND_DISTANCE = 50.0f;
+    float BEHIND_DISTANCE = 150.0f;
     float height = 7.0f;
-    vec3 cameraPos = lead.getPos() - speed_vector * BEHIND_DISTANCE;
+    vec3 cameraPos = lead->getPos() - speed_vector * BEHIND_DISTANCE;
     cameraPos.y += height;
-    this->setYaw(89.0f);
     this->changePosition(cameraPos);
-    this->changeLookFor(lead.getPos());
+    this->changeLookFor(lead->getPos());
     this->update();
     this->aenable(false);
     break;
@@ -112,19 +110,32 @@ void Camera::cameraLogic(vec3 speed_vector, Bird lead) {
   case CameraType::CENTER: {
     vec3 up(0.0, 1.0, 0.0);
     this->changePosition(vec3(0, 30, 0));
-    this->changeLookFor(lead.getPos());
+    this->changeLookFor(lead->getPos());
     this->aenable(false);
     break;
   }
   case CameraType::NORMAL_SPEED_VECTOR: {
+    float SIDE_DISTANCE = 150.0f;
+
+    vec3 up_vector(0.0f, 1.0f, 0.0f);
+    vec3 right_vector = up_vector.prodVetorial(speed_vector);
+    right_vector.normaliza();
+
+    vec3 leaderPos = lead->getPos();
+
+    vec3 cameraPos = leaderPos + right_vector * SIDE_DISTANCE;
+
+    this->changePosition(cameraPos);
+    this->changeLookFor(leaderPos);
+    this->aenable(false);
     break;
   }
   case CameraType::TOP: {
     this->changeRotation(vec3(0, 0, -1));
     this->setPitch(-89.0f);
     this->setYaw(0);
-    this->changePosition(
-        vec3(lead.getPos().x + speed_vector.x, 200, lead.getPos().z + speed_vector.z));
+    this->changePosition(vec3(lead->getPos().x + speed_vector.x, 200,
+                              lead->getPos().z + speed_vector.z));
     this->update();
     this->aenable(true);
     break;

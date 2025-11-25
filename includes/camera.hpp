@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CAMERA_HPP
+#define CAMERA_HPP
 
 #include "vector.hpp"
 #include "bird.hpp"
@@ -38,5 +39,8 @@ public:
   void setPitch(float dPitch);
   void changeLookFor(vec3 look);
   void changeCameraType();
-  void cameraLogic(vec3 speed_vector, Bird lead);
+  void cameraLogic(vec3 speed_vector, Bird* lead);
 };
+
+
+#endif

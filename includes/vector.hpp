@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VECTOR_HPP
+#define VECTOR_HPP
 #include <cmath>
 
 struct vec3 {
@@ -22,4 +23,7 @@ struct vec3 {
   vec3 prodVetorial(vec3 v) {
     return vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
   }
+  float length() { return sqrt(x * x + y * y + z * z); }
 };
+
+#endif
